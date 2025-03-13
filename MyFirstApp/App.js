@@ -1,95 +1,136 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 
-const App = () => {
-  const [greeting, setGreeting] = useState("Welcome to my profile!");
-  const userName = "John Doe";
+const Stack = createStackNavigator();
 
-  const updateGreeting = () => {
-    setGreeting(prevGreeting => prevGreeting === "Welcome to my profile!" ? "Hope you're having a great day!" : "Welcome to my profile!");
+const tasksData = [
+  { id: '1', title: 'Buy Groceries', description: 'Milk, Eggs, Bread, Butter', image: 'https://picsum.photos/100', completed: false },
+  { id: '2', title: 'Workout', description: 'Go for a 30-minute run', image: 'https://picsum.photos/101', completed: false },
+  { id: '3', title: 'Read a Book', description: 'Read 20 pages of a novel', image: 'https://picsum.photos/102', completed: false },
+];
+
+const TaskListScreen = ({ navigation }) => {
+  const [tasks, setTasks] = useState(tasksData);
+
+  const markCompleted = (id) => {
+    setTasks(tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task));
   };
+
+  const renderItem = ({ item }) => (
+    <TouchableOpacity onPress={() => navigation.navigate('TaskDetails', { task: item })}>
+      <View style={[styles.taskCard, item.completed && styles.completedTask]}>
+        <Image source={{ uri: item.image }} style={styles.taskImage} />
+        <View style={styles.taskInfo}>
+          <Text style={styles.taskTitle}>{item.title}</Text>
+          <Text style={styles.taskDescription}>{item.description}</Text>
+          <TouchableOpacity style={styles.completeButton} onPress={() => markCompleted(item.id)}>
+            <Text style={styles.completeButtonText}>{item.completed ? 'Undo' : 'Complete'}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
-      <Header title="User Profile" name={userName} imageUrl="https://media.istockphoto.com/id/2151669184/vector/vector-flat-illustration-in-grayscale-avatar-user-profile-person-icon-gender-neutral.jpg?s=612x612&w=0&k=20&c=UEa7oHoOL30ynvmJzSCIPrwwopJdfqzBs0q69ezQoM8=" />
-      <Text style={styles.greeting}>{greeting}</Text>
-      <CustomButton onPress={updateGreeting} title="Update Greeting" />
+      <FlatList data={tasks} keyExtractor={(item) => item.id} renderItem={renderItem} />
     </View>
   );
 };
 
-const Header = ({ title, name, imageUrl }) => {
+const TaskDetailsScreen = ({ route }) => {
+  const { task } = route.params;
   return (
-    <View style={styles.header}>
-      <Text style={styles.headerText}>{title}</Text>
-      <View style={styles.headerProfile}>
-        <Text style={styles.headerName}>{name}</Text>
-        <Image source={{ uri: imageUrl }} style={styles.headerImage} />
-      </View>
+    <View style={styles.detailsContainer}>
+      <Image source={{ uri: task.image }} style={styles.detailsImage} />
+      <Text style={styles.detailsTitle}>{task.title}</Text>
+      <Text style={styles.detailsDescription}>{task.description}</Text>
     </View>
   );
 };
 
-const CustomButton = ({ onPress, title }) => {
+export default function App() {
   return (
-    <TouchableOpacity style={styles.button} onPress={onPress}>
-      <Text style={styles.buttonText}>{title}</Text>
-    </TouchableOpacity>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Tasks" component={TaskListScreen} />
+        <Stack.Screen name="TaskDetails" component={TaskDetailsScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#f5f5f5',
     padding: 20,
   },
-  header: {
-    position: 'absolute',
-    top: 50,
-    width: '100%',
-    backgroundColor: '#6200ea',
-    padding: 20,
+  taskCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 15,
+    marginVertical: 10,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
   },
-  headerText: {
-    fontSize: 20,
+  completedTask: {
+    backgroundColor: '#d4edda',
+  },
+  taskImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 10,
+    marginRight: 15,
+  },
+  taskInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  taskTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
   },
-  headerProfile: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  taskDescription: {
+    fontSize: 14,
+    color: '#666',
   },
-  headerName: {
-    fontSize: 16,
-    color: '#fff',
-    marginRight: 10,
-  },
-  headerImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  greeting: {
-    fontSize: 16,
-    color: '#333',
-    marginVertical: 20,
-  },
-  button: {
+  completeButton: {
+    marginTop: 10,
     backgroundColor: '#6200ea',
-    padding: 10,
+    padding: 5,
     borderRadius: 5,
+    alignSelf: 'flex-start',
   },
-  buttonText: {
+  completeButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
+  },
+  detailsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  detailsImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  detailsTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  detailsDescription: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
 });
-
-export default App;
